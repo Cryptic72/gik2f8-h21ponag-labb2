@@ -80,26 +80,51 @@ function saveTask() {
   });
 }
 
+// Added code to RenderList() so that the tasks are sorted by date. If a task is marked as completed it is moved to the bottom of the list or back up again if unmarked.
+
 function renderList() {
+  const taskList = [];
   console.log('rendering');
   api.getAll().then((tasks) => {
     todoListElement.innerHTML = '';
     if (tasks && tasks.length > 0) {
       tasks.forEach((task) => {
+        taskList.push(task);
+      });
+      taskList.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+      for(let i = 0; i < taskList.length; i++){
+        if (taskList[i]['completed'] == true) {
+          taskList.splice(taskList.length, 1, taskList[i]);
+          taskList.splice(i, 1);
+        }
+      }
+      taskList.forEach((task) => {
         todoListElement.insertAdjacentHTML('beforeend', renderTask(task));
       });
     }
   });
 }
 
-function renderTask({ id, title, description, dueDate }) {
+/* For rendering the tasks in the list on the website. Since rendering of list commences between every call the 
+completed status was added as a parameter to make the checkbox remain ticked if it was clicked, otherwise it will untick after clicked. */
+
+function renderTask({ id, title, description, dueDate, completed }) {
+
+  const checkStatus =  completed == true ? "checked" : "";
+  const bg = completed == true ? "bg-lime-400 rounded-md" : "";
+
+  // If the task is completed the background is set to lime-400 + rounded and "checked" is added to tag to make checkbox ticked.
+
   let html = `
     <li class="select-none mt-2 py-2 border-b border-amber-300">
-      <div class="flex items-center">
+      <div class="flex items-center p-1 ${bg}" id=${id}>
         <h3 class="mb-3 flex-1 text-xl font-bold text-pink-800 uppercase">${title}</h3>
         <div>
           <span>${dueDate}</span>
           <button onclick="deleteTask(${id})" class="inline-block bg-amber-500 text-xs text-amber-900 border border-white px-3 py-1 rounded-md ml-2">Ta bort</button>
+          <br>
+          <input onclick="completeTask(${id})" type="checkbox" id="completeBox" name="completeBox"${checkStatus}>
+          <label for="completedBox">Utförd</label><br>
         </div>
       </div>`;
   description &&
@@ -116,6 +141,13 @@ function deleteTask(id) {
   api.remove(id).then((result) => {
     renderList();
   });
+}
+
+// When checkbox is ticked an api call is made.
+
+function completeTask(id) {
+  const status = document.getElementById(id).querySelector('#completeBox').checked;
+  api.update(id, status);
 }
 
 renderList();

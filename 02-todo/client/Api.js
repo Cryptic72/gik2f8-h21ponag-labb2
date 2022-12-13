@@ -43,4 +43,17 @@ class Api {
       .then((result) => result)
       .catch((err) => console.log(err));
   }
+
+  // Update api on client side. "Status" contains the boolean status of the checkbox and "id" the unique id of the ask.
+
+  update(id, status) {
+    const JSONData = JSON.stringify({"status": status});
+    return fetch(`${this.url}/${id}`, {
+      method: 'PUT',
+      body: JSONData,
+      headers: {"Content-Type": "application/json"}
+    })
+      .then((result) => result)
+      .catch((err) => console.log(err));
+  }
 }
